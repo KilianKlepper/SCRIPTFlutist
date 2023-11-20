@@ -27,7 +27,7 @@ The First High-Side Switch will control the power to the Buck-Converte used from
 
 ### ESP32 WROOM
 
-![ESP32WROOM Pinout](https://i0.wp.com/randomnerdtutorials.com/wp-content/uploads/2018/08/esp32-pinout-chip-ESP-WROOM-32.png?resize=1024%2C523&quality=100&strip=all&ssl=1)
+![ESP32WROOM Pinout](https://cdn.shopify.com/s/files/1/0609/6011/2892/files/doc-esp32-pinout-reference-wroom-devkit.png?width=1384)
 <https://randomnerdtutorials.com/esp32-pinout-reference-gpios/>
 
 | **Feature**       | **GPIO**     | **STATE**      |
