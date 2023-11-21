@@ -19,8 +19,6 @@ enum rgbEffect
     SINELON
 };
 
-
-
 void initRGB();
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue);
