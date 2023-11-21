@@ -80,11 +80,11 @@ void initRGB(){
 }
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue) {
-    Serial.print("Update Color to Value:... ");
+    // Serial.print("Update Color to Value:... ");
     LEDS.showColor(CRGB(dec_red, dec_green, dec_blue));
-    Serial.print(dec_red); Serial.print(", ");
-    Serial.print(dec_green); Serial.print(", ");
-    Serial.println(dec_blue);
+    // Serial.print(dec_red); Serial.print(", ");
+    // Serial.print(dec_green); Serial.print(", ");
+    // Serial.println(dec_blue);
     // FastLED.show();
 }
 

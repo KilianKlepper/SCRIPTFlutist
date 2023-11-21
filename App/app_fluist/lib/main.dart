@@ -1,125 +1,252 @@
+import 'dart:async';
+import 'dart:io' show Platform;
+
+import 'package:location_permissions/location_permissions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+  return runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: HomePage()
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
+  );
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomePageState extends State<HomePage> {
 
-  void _incrementCounter() {
+  String connectionText = "";
+
+// Some state management stuff
+  bool _foundDeviceWaitingToConnect = false;
+  bool _scanStarted = false;
+  bool _connected = false;
+// Bluetooth related variables
+  late DiscoveredDevice _ubiqueDevice;
+  final flutterReactiveBle = FlutterReactiveBle();
+  late StreamSubscription<DiscoveredDevice> _scanStream;
+  late QualifiedCharacteristic _rxCharacteristic;
+// These are the UUIDs of your device
+  final Uuid serviceUuid = Uuid.parse("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+  final Uuid characteristicUuid = Uuid.parse("beb5483e-36e1-4688-b7f5-ea07361b26a8");
+
+  void _startScan() async {
+// Platform permissions handling stuff
+    bool permGranted = false;
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _scanStarted = true;
+      connectionText = "Scanning";
     });
+    PermissionStatus permission;
+    if (Platform.isAndroid) {
+      permission = await LocationPermissions().requestPermissions();
+      if (permission == PermissionStatus.granted) permGranted = true;
+    } else if (Platform.isIOS) {
+      permGranted = true;
+    }
+// Main scanning logic happens here ⤵️
+    if (permGranted) {
+      print('BLE: Permission Granted...');
+      _scanStream = flutterReactiveBle
+          .scanForDevices(withServices: [serviceUuid]).listen((device) {
+        // Change this string to what you defined in Zephyr
+        if (device.name == 'ESP32') {
+          setState(() {
+            _ubiqueDevice = device;
+            _foundDeviceWaitingToConnect = true;
+          });
+        }
+      });
+    }
+  }
+
+  void _connectToDevice() {
+    // We're done scanning, we can cancel it
+    print('BLE: Connect to Device....');
+    connectionText = "Connected";
+    _scanStream.cancel();
+    // Let's listen to our connection so we can make updates on a state change
+    Stream<ConnectionStateUpdate> _currentConnectionStream = flutterReactiveBle
+        .connectToAdvertisingDevice(
+            id: _ubiqueDevice.id,
+            prescanDuration: const Duration(seconds: 1),
+            withServices: [serviceUuid, characteristicUuid]);
+    _currentConnectionStream.listen((event) {
+      switch (event.connectionState) {
+        // We're connected and good to go!
+        case DeviceConnectionState.connected:
+          {
+            print('BLE: Device connected.....');
+            _rxCharacteristic = QualifiedCharacteristic(
+                serviceId: serviceUuid,
+                characteristicId: characteristicUuid,
+                deviceId: event.deviceId);
+            setState(() {
+              _foundDeviceWaitingToConnect = false;
+              _connected = true;
+            });
+            break;
+          }
+        // Can add various state state updates on disconnect
+        case DeviceConnectionState.disconnected:
+          {
+            print('BLE: Device disconnected..');
+            connectionText = "Disconnected";
+            break;
+          }
+        default:
+      }
+    });
+  } 
+
+  void _partyTime() {
+    if (_connected) {
+      connectionText = "Sent";
+      int red = currentColor.red;
+      flutterReactiveBle
+          .writeCharacteristicWithResponse(_rxCharacteristic, value: [
+        red,
+      ]);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text(connectionText),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
+			backgroundColor: currentColor,
+			body: Center(
+        child: ElevatedButton(
+          onPressed: ()=>showPicker(), 
+          child: Text("Pick Color", style:  TextStyle(color: Colors.white),),),
+      ),
+			persistentFooterButtons: [
+        // We want to enable this button if the scan has NOT started
+        // If the scan HAS started, it should be disabled.
+        _scanStarted
+            // True condition
+            ? ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.grey, // background
+                  onPrimary: Colors.white, // foreground
+                ),
+                onPressed: () {},
+                child: const Icon(Icons.search),
+              )
+            // False condition
+            : ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.blue, // background
+                  onPrimary: Colors.white, // foreground
+                ),
+                onPressed: _startScan,
+                child: const Icon(Icons.search),
+              ),
+        _foundDeviceWaitingToConnect
+            // True condition
+            ? ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.blue, // background
+                  onPrimary: Colors.white, // foreground
+                ),
+                onPressed: _connectToDevice,
+                child: const Icon(Icons.bluetooth),
+              )
+            // False condition
+            : ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.grey, // background
+                  onPrimary: Colors.white, // foreground
+                ),
+                onPressed: () {},
+                child: const Icon(Icons.bluetooth),
+              ),
+        _connected
+            // True condition
+            ? ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.blue, // background
+                  onPrimary: Colors.white, // foreground
+                ),
+                onPressed: _partyTime,
+                child: const Icon(Icons.celebration_rounded),
+              )
+            // False condition
+            : ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.grey, // background
+                  onPrimary: Colors.white, // foreground
+                ),
+                onPressed: () {},
+                child: const Icon(Icons.celebration_rounded),
+              ),
+      ],
+		);
+  }
+      // create some values
+Color pickerColor = Color(0xff443a49);
+Color currentColor = Color(0xff443a49);
+
+// ValueChanged<Color> callback
+void changeColor(Color color) {
+  setState(() => pickerColor = color);
+}
+Future showPicker(){
+    // raise the [showDialog] widget
+    return showDialog(
+      builder: (context) => AlertDialog(
+        title: const Text('Pick a color!'),
+        content: SingleChildScrollView(
+          child: ColorPicker(
+            pickerColor: pickerColor,
+            onColorChanged: changeColor,
+          ),
+          // Use Material color picker:
           //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
+          // child: MaterialPicker(
+          //   pickerColor: pickerColor,
+          //   onColorChanged: changeColor,
+          //   showLabel: true, // only on portrait mode
+          // ),
           //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+          // Use Block color picker:
+          //
+          // child: BlockPicker(
+          //   pickerColor: currentColor,
+          //   onColorChanged: changeColor,
+          // ),
+          //
+          // child: MultipleChoiceBlockPicker(
+          //   pickerColors: currentColors,
+          //   onColorsChanged: changeColors,
+          // ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        actions: <Widget>[
+          ElevatedButton(
+            child: const Text('Got it'),
+            onPressed: () {
+              setState(() => currentColor = pickerColor);
+              // int red = currentColor.red;
+              // int blue = currentColor.blue;
+              // int green = currentColor.green;
+              String data = 'RGB($red, $green, $blue)';
+              String data = currentColor.value.toRadixString(16).padLeft(8, '0');
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ), context: context,
     );
   }
 }

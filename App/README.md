@@ -8,6 +8,9 @@
 
 In the palm of your hand lies the magic wand for the Stained Fluist! The App folder introduces you to the BLE-powered mobile app, giving you control over the RGB spectacle right from your fingertips.
 
+## Setup:
+Phone: Einstellung/Entwickleroptionen/USB-Debugging
+
 ## Features
 
 Librarys:

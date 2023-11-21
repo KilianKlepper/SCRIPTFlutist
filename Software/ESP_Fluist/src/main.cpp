@@ -23,8 +23,8 @@ void loop() {
   displayBLE_Status(get_connectionState());
 
   displayRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
-  // updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
-  updateRGBeffect(appEffect);
+  updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
+  // updateRGBeffect(appEffect);
   // put your main code here, to run repeatedly:
   displayOnOff_Status(get_Button_OnOff_state());
   displayCapSense_Status(get_CapSense_Up_state(), get_CapSense_Down_state(), get_CapSense_Effect_state());
