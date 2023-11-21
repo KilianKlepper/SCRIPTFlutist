@@ -13,6 +13,7 @@ void initInterface(){
     pinMode(ON_OFF,INPUT);
     pinMode(VIB_MOT,OUTPUT);
     pinMode(RGB_POW,OUTPUT);
+    digitalWrite(RGB_POW, HIGH);
     Serial.println("OK");
 }
 

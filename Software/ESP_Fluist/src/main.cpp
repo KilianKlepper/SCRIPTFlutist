@@ -2,6 +2,7 @@
 #include <interface.h>
 #include <display.h>
 #include <ble.h>
+#include <rgb.h>
 
 
 void setup() {
@@ -9,6 +10,7 @@ void setup() {
   initInterface();
   initDisplay();
   initBLE();
+  initRGB();
 
 }
 
@@ -20,9 +22,9 @@ void loop() {
   displayBLE_Status(get_connectionState());
 
   displayRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
-
+  updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
   // put your main code here, to run repeatedly:
   displayOnOff_Status(get_Button_OnOff_state());
   displayCapSense_Status(get_CapSense_Up_state(), get_CapSense_Down_state(), get_CapSense_Effect_state());
-  delay(500);
+  delay(1000);
 }

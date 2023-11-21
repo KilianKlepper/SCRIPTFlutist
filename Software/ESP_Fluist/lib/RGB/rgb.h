@@ -1,4 +1,4 @@
-// display.h
+// rgb.h
 // BTF-12V-30L-W, WS2811
 // https://github.com/FastLED/FastLED/wiki/Overview
 #ifndef RGB_H
@@ -11,6 +11,6 @@
 
 void initRGB();
 
-void updateRGBValue(int red, int green, int blue);
+void updateRGBValue(int dec_red, int dec_green, int dec_blue);
 
 #endif // RGB_H
