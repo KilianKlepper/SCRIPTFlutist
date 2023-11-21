@@ -4,6 +4,7 @@
 #include <ble.h>
 #include <rgb.h>
 
+rgbEffect appEffect = JUGGLE;
 
 void setup() {
   Serial.begin(115200);
@@ -22,9 +23,10 @@ void loop() {
   displayBLE_Status(get_connectionState());
 
   displayRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
-  updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
+  // updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
+  updateRGBeffect(appEffect);
   // put your main code here, to run repeatedly:
   displayOnOff_Status(get_Button_OnOff_state());
   displayCapSense_Status(get_CapSense_Up_state(), get_CapSense_Down_state(), get_CapSense_Effect_state());
-  delay(1000);
+  delay(20);
 }

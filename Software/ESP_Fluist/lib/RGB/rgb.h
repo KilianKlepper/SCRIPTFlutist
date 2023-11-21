@@ -8,9 +8,23 @@
 #define NUM_LEDS 10
 #define DATA_PIN 23
 
+enum rgbEffect
+{
+    BASIC,
+    RAINBOW,
+    RAINBOWGLITTER,
+    KONFETTI,
+    LAUFLICHT,
+    JUGGLE,
+    SINELON
+};
+
+
 
 void initRGB();
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue);
+
+void updateRGBeffect(enum rgbEffect effect);
 
 #endif // RGB_H
