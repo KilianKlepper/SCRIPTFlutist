@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "FastLED.h"
 #include "rgb.h"
+#include "ble.h"
 
 
 CRGB leds[NUM_LEDS];
@@ -81,41 +82,48 @@ void initRGB(){
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue) {
     // Serial.print("Update Color to Value:... ");
+    // FastLED.setBrightness(dec_alpha);
     LEDS.showColor(CRGB(dec_red, dec_green, dec_blue));
     // Serial.print(dec_red); Serial.print(", ");
     // Serial.print(dec_green); Serial.print(", ");
     // Serial.println(dec_blue);
     // FastLED.show();
+    // delay(300);
 }
 
-void updateRGBeffect(enum rgbEffect effect) {
+void updateRGBeffect(int effect) {
+    FastLED.setBrightness(get_valueALPHA());
     switch (effect)
     {
     case BASIC:
-        LEDS.showColor(CRGB(10, 10, 10));
+        updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
         break;
     case RAINBOW:
         RGBRainbow();
+        FastLED.show();
         break;
     case RAINBOWGLITTER:
         RGBGlitterRainbow();
+        FastLED.show();
         break;
     case KONFETTI:
         RGBKonfetti();
+        FastLED.show();
         break;
     case LAUFLICHT:
         RGBLauflicht();
+        FastLED.show();
         break;
     case JUGGLE:
         RGBjuggle();
+        FastLED.show();
         break;
     case SINELON:
         RGBsinelon();
+        FastLED.show();
         break;
     default:
         break;
     }
-    FastLED.setBrightness(100);
-    FastLED.show();
 }
 

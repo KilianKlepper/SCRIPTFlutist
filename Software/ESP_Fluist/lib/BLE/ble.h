@@ -20,5 +20,7 @@ int get_connectionState();
 int get_valueRED();
 int get_valueGREEN();
 int get_valueBLUE();
+int get_valueALPHA();
+int get_valueEFFECT();
 
 #endif // BLE_H

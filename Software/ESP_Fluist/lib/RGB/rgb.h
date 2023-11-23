@@ -23,6 +23,6 @@ void initRGB();
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue);
 
-void updateRGBeffect(enum rgbEffect effect);
+void updateRGBeffect(int effect);
 
 #endif // RGB_H

@@ -18,6 +18,8 @@ bool bleAdvertising_state = false;
 int bleDeviceConnection_state = 0;
 
 int red = 0, green = 0, blue = 0;
+int effect = 0;
+int alpha = 0;
 
 int hexToDecimal(String hexString) {
   long decimalValue = strtol(hexString.c_str(), NULL, 16);
@@ -36,31 +38,35 @@ class MyServerCallbacks: public BLEServerCallbacks {
 };
 
 
-class MyCallbacks: public BLECharacteristicCallbacks {
-  void onWrite(BLECharacteristic *pCharacteristic){
+class MyCallbacks : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *pCharacteristic) {
     std::string value = pCharacteristic->getValue();
 
-    if(value.length() > 0){
+    Serial.print("New Message (Hex): ");
+    
+    for (int i = 0; i < value.length(); i++) {
+      Serial.print(String(value[i], HEX));
+      Serial.print("");
+    }
+    Serial.println();
 
-      Serial.print("New Message:............. ");
-      
-      for(int i=0; i < value.length(); i++){
-        Serial.print(value[i]);
+    if (value.length() == 5 * sizeof(int8_t)) {
+      int receivedValues[5];
+      for (int i = 0; i < 5; ++i) {
+        receivedValues[i] = value[i];
       }
-      Serial.println();
-      // Extract RGB values from the received hex color code
-      // Convert std::string to String
-      String stringValue = String(value.c_str());
-      red = hexToDecimal(stringValue.substring(2, 4));
-      green = hexToDecimal(stringValue.substring(4, 6));
-      blue = hexToDecimal(stringValue.substring(6, 8));
-      // Serial.print("Red: ");
-      // Serial.println(red);
-      // Serial.print("Green: ");
-      // Serial.println(green);
-      // Serial.print("Blue: ");
-      // Serial.println(blue);
-      
+      // Now 'receivedValues' contains the 4 integers sent from Flutter
+      effect = receivedValues[0];
+      alpha = receivedValues[1];
+      red = receivedValues[2];
+      green = receivedValues[3];
+      blue = receivedValues[4];
+
+      Serial.println("eARGB: " + String(effect)+' ' + String(alpha)+' ' + String(red)+' ' + String(green)+' ' + String(blue));
+
+      // Continue with your processing...
+    } else {
+      Serial.println("Received value is too short.");
     }
   }
 };
@@ -144,4 +150,11 @@ int get_valueGREEN() {
 };
 int get_valueBLUE() {
     return blue;
+}
+
+int get_valueALPHA() {
+    return alpha;
+}
+int get_valueEFFECT() {
+    return effect;
 }

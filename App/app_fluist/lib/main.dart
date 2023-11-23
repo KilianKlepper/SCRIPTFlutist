@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:io' show Platform;
 
 import 'package:location_permissions/location_permissions.dart';
@@ -23,9 +24,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
+// App Header String
   String connectionText = "";
 
+// ARGB
+  int alpha = 0;
+  int red = 0;
+  int blue = 0;
+  int green = 0;
+  int effect = 0;
 // Some state management stuff
   bool _foundDeviceWaitingToConnect = false;
   bool _scanStarted = false;
@@ -56,8 +63,7 @@ class _HomePageState extends State<HomePage> {
 // Main scanning logic happens here ⤵️
     if (permGranted) {
       print('BLE: Permission Granted...');
-      _scanStream = flutterReactiveBle
-          .scanForDevices(withServices: [serviceUuid]).listen((device) {
+      _scanStream = flutterReactiveBle.scanForDevices(withServices: [serviceUuid]).listen((device) {
         // Change this string to what you defined in Zephyr
         if (device.name == 'ESP32') {
           setState(() {
@@ -107,16 +113,32 @@ class _HomePageState extends State<HomePage> {
       }
     });
   } 
-
-  void _partyTime() {
+  bool colorChangeUpdated = false; // Flag to track color changes
+  void updateRGBviaBLE() {
     if (_connected) {
       connectionText = "Sent";
-      int red = currentColor.red;
-      flutterReactiveBle
-          .writeCharacteristicWithResponse(_rxCharacteristic, value: [
-        red,
-      ]);
-    }
+      alpha = currentColor.alpha;
+      red = currentColor.red;
+      blue = currentColor.blue;
+      green = currentColor.green;
+      // Assuming effect, alpha, red, blue, and green are int variables
+      ByteData data = ByteData(5); // 4 bytes per int, 5 ints
+      data.setInt8(0, effect);
+      data.setInt8(1, alpha);
+      data.setInt8(2, red);
+      data.setInt8(3, green);
+      data.setInt8(4, blue);
+
+      flutterReactiveBle.writeCharacteristicWithResponse(
+          _rxCharacteristic, value: data.buffer.asUint8List());
+      }
+      colorChangeUpdated = true;
+      Future.delayed(const Duration(milliseconds: 75), () {
+      // Reset the connectionText or perform additional actions if needed
+      setState(() {
+        colorChangeUpdated = false;
+      });
+    });
   }
 
   @override
@@ -129,7 +151,7 @@ class _HomePageState extends State<HomePage> {
 			body: Center(
         child: ElevatedButton(
           onPressed: ()=>showPicker(), 
-          child: Text("Pick Color", style:  TextStyle(color: Colors.white),),),
+          child: Text("Color", style:  TextStyle(color: Colors.white),),),
       ),
 			persistentFooterButtons: [
         // We want to enable this button if the scan has NOT started
@@ -170,7 +192,7 @@ class _HomePageState extends State<HomePage> {
                   onPrimary: Colors.white, // foreground
                 ),
                 onPressed: () {},
-                child: const Icon(Icons.bluetooth),
+                child: const Icon(Icons.bluetooth_connected),
               ),
         _connected
             // True condition
@@ -179,8 +201,8 @@ class _HomePageState extends State<HomePage> {
                   primary: Colors.blue, // background
                   onPrimary: Colors.white, // foreground
                 ),
-                onPressed: _partyTime,
-                child: const Icon(Icons.celebration_rounded),
+                onPressed: updateRGBviaBLE,
+                child: const Icon(Icons.send),
               )
             // False condition
             : ElevatedButton(
@@ -189,7 +211,7 @@ class _HomePageState extends State<HomePage> {
                   onPrimary: Colors.white, // foreground
                 ),
                 onPressed: () {},
-                child: const Icon(Icons.celebration_rounded),
+                child: const Icon(Icons.send),
               ),
       ],
 		);
@@ -198,51 +220,66 @@ class _HomePageState extends State<HomePage> {
 Color pickerColor = Color(0xff443a49);
 Color currentColor = Color(0xff443a49);
 
+
 // ValueChanged<Color> callback
 void changeColor(Color color) {
-  setState(() => pickerColor = color);
+  setState(() {
+    pickerColor = color;
+    currentColor = color;
+    effect = 0;
+    // Set the flag to true when color changes
+    if(!colorChangeUpdated) updateRGBviaBLE();
+  });
 }
+
 Future showPicker(){
     // raise the [showDialog] widget
     return showDialog(
       builder: (context) => AlertDialog(
-        title: const Text('Pick a color!'),
+        // title: const Text('Pick a color!'),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: pickerColor,
             onColorChanged: changeColor,
+            enableAlpha: true,
+            labelTypes: [],
+            paletteType: PaletteType.hueWheel,
+            hexInputBar: false,
           ),
-          // Use Material color picker:
-          //
-          // child: MaterialPicker(
-          //   pickerColor: pickerColor,
-          //   onColorChanged: changeColor,
-          //   showLabel: true, // only on portrait mode
-          // ),
-          //
-          // Use Block color picker:
-          //
-          // child: BlockPicker(
-          //   pickerColor: currentColor,
-          //   onColorChanged: changeColor,
-          // ),
-          //
-          // child: MultipleChoiceBlockPicker(
-          //   pickerColors: currentColors,
-          //   onColorsChanged: changeColors,
-          // ),
+
         ),
         actions: <Widget>[
           ElevatedButton(
             child: const Text('Got it'),
             onPressed: () {
               setState(() => currentColor = pickerColor);
-              // int red = currentColor.red;
-              // int blue = currentColor.blue;
-              // int green = currentColor.green;
-              String data = 'RGB($red, $green, $blue)';
-              String data = currentColor.value.toRadixString(16).padLeft(8, '0');
+              updateRGBviaBLE();
               Navigator.of(context).pop();
+              print('Alpha: $alpha, Red:$red, Green:$green, Blue:$blue');
+            },
+          ),
+          ElevatedButton(
+            child: const Text('Rainbow'),
+            onPressed: () {
+              effect = 1;
+              updateRGBviaBLE();
+            Navigator.of(context).pop(); // Close the dialog without updating RGB
+            },
+          ),
+          ElevatedButton(
+            child: const Text('Confetti'),
+            onPressed: () {
+              effect = 3;
+              updateRGBviaBLE();
+            Navigator.of(context).pop(); // Close the dialog without updating RGB
+            },
+          ),
+          ElevatedButton(
+            child: const Text('Juggle'),
+            onPressed: () {
+              effect = 5;
+              updateRGBviaBLE();
+            Navigator.of(context).pop(); // Close the dialog without updating RGB
             },
           ),
         ],
