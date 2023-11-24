@@ -9,10 +9,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 void main() {
   return runApp(
-    const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomePage()
-      ),
+    const MaterialApp(debugShowCheckedModeBanner: false, home: HomePage()),
   );
 }
 
@@ -44,7 +41,8 @@ class _HomePageState extends State<HomePage> {
   late QualifiedCharacteristic _rxCharacteristic;
 // These are the UUIDs of your device
   final Uuid serviceUuid = Uuid.parse("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
-  final Uuid characteristicUuid = Uuid.parse("beb5483e-36e1-4688-b7f5-ea07361b26a8");
+  final Uuid characteristicUuid =
+      Uuid.parse("beb5483e-36e1-4688-b7f5-ea07361b26a8");
 
   void _startScan() async {
 // Platform permissions handling stuff
@@ -63,7 +61,8 @@ class _HomePageState extends State<HomePage> {
 // Main scanning logic happens here ⤵️
     if (permGranted) {
       print('BLE: Permission Granted...');
-      _scanStream = flutterReactiveBle.scanForDevices(withServices: [serviceUuid]).listen((device) {
+      _scanStream = flutterReactiveBle
+          .scanForDevices(withServices: [serviceUuid]).listen((device) {
         // Change this string to what you defined in Zephyr
         if (device.name == 'ESP32') {
           setState(() {
@@ -112,7 +111,8 @@ class _HomePageState extends State<HomePage> {
         default:
       }
     });
-  } 
+  }
+
   bool colorChangeUpdated = false; // Flag to track color changes
   void updateRGBviaBLE() {
     if (_connected) {
@@ -129,11 +129,11 @@ class _HomePageState extends State<HomePage> {
       data.setInt8(3, green);
       data.setInt8(4, blue);
 
-      flutterReactiveBle.writeCharacteristicWithResponse(
-          _rxCharacteristic, value: data.buffer.asUint8List());
-      }
-      colorChangeUpdated = true;
-      Future.delayed(const Duration(milliseconds: 75), () {
+      flutterReactiveBle.writeCharacteristicWithResponse(_rxCharacteristic,
+          value: data.buffer.asUint8List());
+    }
+    colorChangeUpdated = true;
+    Future.delayed(const Duration(milliseconds: 75), () {
       // Reset the connectionText or perform additional actions if needed
       setState(() {
         colorChangeUpdated = false;
@@ -147,13 +147,17 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text(connectionText),
       ),
-			backgroundColor: currentColor,
-			body: Center(
+      backgroundColor: currentColor,
+      body: Center(
         child: ElevatedButton(
-          onPressed: ()=>showPicker(), 
-          child: Text("Color", style:  TextStyle(color: Colors.white),),),
+          onPressed: () => showPicker(),
+          child: const Text(
+            "Color",
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
       ),
-			persistentFooterButtons: [
+      persistentFooterButtons: [
         // We want to enable this button if the scan has NOT started
         // If the scan HAS started, it should be disabled.
         _scanStarted
@@ -214,25 +218,25 @@ class _HomePageState extends State<HomePage> {
                 child: const Icon(Icons.send),
               ),
       ],
-		);
+    );
   }
-      // create some values
-Color pickerColor = Color(0xff443a49);
-Color currentColor = Color(0xff443a49);
 
+  // create some values
+  Color pickerColor = Color(0xff443a49);
+  Color currentColor = Color(0xff443a49);
 
 // ValueChanged<Color> callback
-void changeColor(Color color) {
-  setState(() {
-    pickerColor = color;
-    currentColor = color;
-    effect = 0;
-    // Set the flag to true when color changes
-    if(!colorChangeUpdated) updateRGBviaBLE();
-  });
-}
+  void changeColor(Color color) {
+    setState(() {
+      pickerColor = color;
+      currentColor = color;
+      effect = 0;
+      // Set the flag to true when color changes
+      if (!colorChangeUpdated) updateRGBviaBLE();
+    });
+  }
 
-Future showPicker(){
+  Future showPicker() {
     // raise the [showDialog] widget
     return showDialog(
       builder: (context) => AlertDialog(
@@ -246,7 +250,6 @@ Future showPicker(){
             paletteType: PaletteType.hueWheel,
             hexInputBar: false,
           ),
-
         ),
         actions: <Widget>[
           ElevatedButton(
@@ -263,7 +266,8 @@ Future showPicker(){
             onPressed: () {
               effect = 1;
               updateRGBviaBLE();
-            Navigator.of(context).pop(); // Close the dialog without updating RGB
+              Navigator.of(context)
+                  .pop(); // Close the dialog without updating RGB
             },
           ),
           ElevatedButton(
@@ -271,7 +275,8 @@ Future showPicker(){
             onPressed: () {
               effect = 3;
               updateRGBviaBLE();
-            Navigator.of(context).pop(); // Close the dialog without updating RGB
+              Navigator.of(context)
+                  .pop(); // Close the dialog without updating RGB
             },
           ),
           ElevatedButton(
@@ -279,11 +284,13 @@ Future showPicker(){
             onPressed: () {
               effect = 5;
               updateRGBviaBLE();
-            Navigator.of(context).pop(); // Close the dialog without updating RGB
+              Navigator.of(context)
+                  .pop(); // Close the dialog without updating RGB
             },
           ),
         ],
-      ), context: context,
+      ),
+      context: context,
     );
   }
 }

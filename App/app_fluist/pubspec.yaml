@@ -38,6 +38,7 @@ dependencies:
   flutter_reactive_ble: ^5.2.0
   flutter_colorpicker: ^1.0.3
   location_permissions: ^4.0.0
+  flutter_launcher_icons: "^0.13.1"
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +50,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+
+flutter_icons:
+  # https://docs.flutter.dev/packages-and-plugins/using-packages
+  android: true  
+  ios: true  
+  image_path: "assets/launcher_icon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
