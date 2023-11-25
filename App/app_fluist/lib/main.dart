@@ -25,6 +25,7 @@ class _HomePageState extends State<HomePage> {
   String connectionText = "";
 
 // ARGB
+  double brightness = 0;
   int alpha = 0;
   int red = 0;
   int blue = 0;
@@ -140,23 +141,144 @@ class _HomePageState extends State<HomePage> {
       });
     });
   }
+  
+  void powerOnOff() {
+    setState(() {
+      if(effect == 0) {
+        effect = 1;
+        onoffColor = Colors.white;
+        currentColor = Color.fromARGB(255, 226, 200, 122);
+      } else {
+        effect = 0;
+        currentColor = Color.fromARGB(255, 107, 108, 109);
+        onoffColor = const Color.fromARGB(255, 52, 55, 63);
+      }
+      // updateRGBviaBLE();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(connectionText),
+        title: Text('Stained Fluist'),
+        centerTitle: true,
+        leading: Icon(Icons.light),
+        backgroundColor: Color.fromARGB(255, 70, 74, 85),
       ),
-      backgroundColor: currentColor,
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () => showPicker(),
-          child: const Text(
-            "Color",
-            style: TextStyle(color: Colors.grey),
+      floatingActionButton: Column(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+          FloatingActionButton(
+            backgroundColor: Color.fromARGB(255, 70, 74, 85),
+            onPressed: () => showPicker(),
+            child: Icon(
+              Icons.color_lens,
+              color:onoffColor,
+            ),
+          ),
+          SizedBox(height: 16), // Add spacing between buttons
+          FloatingActionButton(
+            backgroundColor: Color.fromARGB(255, 70, 74, 85),
+            onPressed: () => showEffects(),
+            child: Icon(
+              Icons.slideshow,
+              color:onoffColor,
+            ),
+          ),
+          SizedBox(height: 300), // Add spacing between buttons
+          FloatingActionButton(
+            backgroundColor: Color.fromARGB(255, 70, 74, 85),
+            onPressed: () {
+              powerOnOff();
+          },
+            child: Icon(
+              Icons.power_settings_new,
+              color:onoffColor,
+            ),
+          ),
+        ],
+      ),
+      
+      backgroundColor: Color.fromARGB(255, 52, 55, 63),
+      body: Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(height: 16), // Add spacing
+        RichText(
+          text: TextSpan(
+            text: 'WINDOW STATUS: ', // First part of the text with one color
+            style: TextStyle(color: Color.fromARGB(255, 70, 74, 85)),
+            children: <TextSpan>[
+              TextSpan(
+                text: connectionText.toUpperCase(), // Second part of the text with a different color
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
-      ),
+        SizedBox(height: 100), // Add spacing
+        Container(
+          width: 300,
+          color: currentColor,
+          child: Image.asset('assets/outline.png'),
+        ),
+        SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 60),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    // Replace with your first icon or widget
+                    child: Icon(
+                      Icons.light_mode_outlined,
+                      color: Colors.grey,
+                      ),
+                  ),
+                  Expanded(
+                    child: Slider(
+                      value: brightness,
+                      activeColor: Colors.grey,
+                      inactiveColor: Color.fromARGB(255, 70, 74, 85),
+                      thumbColor: Colors.white,
+                      onChanged: (value) {
+                        setState(() {
+                          brightness = value;
+                        });
+                      },
+                    ),
+                  ),
+                  Container(
+                    // Replace with your second icon or widget
+                    child: Icon(
+                      Icons.light_mode,
+                      color: Colors.grey,
+                      ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        // SizedBox(height: 16), // Add spacing
+        // Center(
+        //   child: ElevatedButton(
+        //     onPressed: () => showPicker(),
+        //     child: const Text(
+        //       "Color",
+        //       style: TextStyle(color: Colors.grey),
+        //     ),
+        //   ),
+        // ),
+      ],
+    ),
       persistentFooterButtons: [
         // We want to enable this button if the scan has NOT started
         // If the scan HAS started, it should be disabled.
@@ -224,6 +346,7 @@ class _HomePageState extends State<HomePage> {
   // create some values
   Color pickerColor = Color(0xff443a49);
   Color currentColor = Color(0xff443a49);
+  Color onoffColor = Color.fromARGB(255, 70, 74, 85);
 
 // ValueChanged<Color> callback
   void changeColor(Color color) {
@@ -241,6 +364,7 @@ class _HomePageState extends State<HomePage> {
     return showDialog(
       builder: (context) => AlertDialog(
         // title: const Text('Pick a color!'),
+        backgroundColor: Color.fromARGB(255, 52, 55, 63),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: pickerColor,
@@ -256,15 +380,29 @@ class _HomePageState extends State<HomePage> {
             child: const Text('Got it'),
             onPressed: () {
               setState(() => currentColor = pickerColor);
+              // effect = 1;
               updateRGBviaBLE();
               Navigator.of(context).pop();
               print('Alpha: $alpha, Red:$red, Green:$green, Blue:$blue');
             },
           ),
+        ],
+      ),
+      context: context,
+    );
+  }
+
+    Future showEffects() {
+    // raise the [showDialog] widget
+    return showDialog(
+      builder: (context) => AlertDialog(
+        title: const Text('Effekte:'),
+        backgroundColor: Color.fromARGB(255, 52, 55, 63),
+        actions: <Widget>[
           ElevatedButton(
             child: const Text('Rainbow'),
             onPressed: () {
-              effect = 1;
+              effect = 1; // 2
               updateRGBviaBLE();
               Navigator.of(context)
                   .pop(); // Close the dialog without updating RGB
@@ -273,7 +411,7 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Confetti'),
             onPressed: () {
-              effect = 3;
+              effect = 3; //4
               updateRGBviaBLE();
               Navigator.of(context)
                   .pop(); // Close the dialog without updating RGB
@@ -282,7 +420,7 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Juggle'),
             onPressed: () {
-              effect = 5;
+              effect = 5; //6
               updateRGBviaBLE();
               Navigator.of(context)
                   .pop(); // Close the dialog without updating RGB
