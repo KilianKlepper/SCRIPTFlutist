@@ -12,18 +12,24 @@ enum rgbEffect
 {
     OFF,
     BASIC,
+    FADE,
     RAINBOW,
     RAINBOWGLITTER,
     KONFETTI,
     LAUFLICHT,
     JUGGLE,
-    SINELON
+    SINELON,
+    STATIONARY
 };
 
 void initRGB();
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue);
 
-void updateRGBeffect(int effect);
+void updateRGBeffect(int effect, int brightness, int speed, int cap_hue);
+
+int get_r();
+int get_g();
+int get_b();
 
 #endif // RGB_H

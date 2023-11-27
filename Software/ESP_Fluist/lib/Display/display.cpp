@@ -20,7 +20,7 @@ void initDisplay() {
     display.clearDisplay();
 
     // Draw a single pixel in white
-    display.drawBitmap(1,1,ble_nc,24,24,1);
+    display.drawBitmap(1,10,ble_nc,24,24,1);
     Serial.println("OK");
 
     // Show the display buffer on the screen. You MUST call display() after
@@ -29,21 +29,19 @@ void initDisplay() {
 }
 
 void displayBLE_Status(int ble_state) {
-    display.clearDisplay();
+    
     int x_pos_icon = 1;
-    int y_pos_icon = 1;
+    int y_pos_icon = 10;
+    display.fillRect(x_pos_icon, y_pos_icon, x_pos_icon+24, y_pos_icon+24, BLACK);
     switch (ble_state)
     {
     case 1: // Disconnected
-        display.fillRect(x_pos_icon, y_pos_icon, x_pos_icon+24, y_pos_icon+24, BLACK);
         display.drawBitmap(x_pos_icon,y_pos_icon,ble_nc,24,24,1);
         break;
     case 2: // Searching
-        display.fillRect(x_pos_icon, y_pos_icon, x_pos_icon+24, y_pos_icon+24, BLACK);
         display.drawBitmap(x_pos_icon,y_pos_icon,ble_search,24,24,1);
         break;
     case 3: // Connected
-        display.fillRect(x_pos_icon, y_pos_icon, x_pos_icon+24, y_pos_icon+24, BLACK);
         display.drawBitmap(x_pos_icon,y_pos_icon,ble_con,24,24,1);
         break;
     
@@ -56,18 +54,19 @@ void displayBLE_Status(int ble_state) {
 
 void displayOnOff_Status(bool OnOff_State) {
     display.setTextSize(1);              // Normal 1:1 pixel scale
-    display.setCursor(1,26);             // Start at top-left corner
-    if(!OnOff_State) {
-        display.setTextColor(SSD1306_WHITE); // Draw white textdisplay.setTextColor(SSD1306_WHITE); // Draw white text
-        display.println(F(":)"));
+    display.setCursor(1,1);             // Start at top-left corner
+    if(OnOff_State) {
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.println(F(" ON "));
     } else {
-        display.setTextColor(SSD1306_BLACK); // Draw 'inverse' text
-        display.println(F(":)"));
+        display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+        display.println(F("OFF "));
     }
     display.display();
 }
 
 void displayCapSense_Status(bool CapSense_Up, bool CapSense_Down, bool CapSense_Effect) {
+    display.fillRect(89, 1, 38, 31, BLACK);
     display.setTextSize(1);              // Normal 1:1 pixel scale
     display.setCursor(90,1);  
     if(CapSense_Up) {
@@ -75,7 +74,7 @@ void displayCapSense_Status(bool CapSense_Up, bool CapSense_Down, bool CapSense_
     } else {
         display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
     }
-    display.print(" UP ");
+    display.print("COLR");
 
     display.setCursor(90,12);           
     if(CapSense_Down) {
@@ -83,7 +82,7 @@ void displayCapSense_Status(bool CapSense_Up, bool CapSense_Down, bool CapSense_
     } else {
         display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
     }
-    display.print("DOWN");
+    display.print("BRIG");
 
     display.setCursor(90,24);         
     if(CapSense_Effect) {
@@ -97,6 +96,7 @@ void displayCapSense_Status(bool CapSense_Up, bool CapSense_Down, bool CapSense_
 }
 
 void displayRGBValue(int dec_red, int dec_green, int dec_blue) {
+    display.fillRect(39, 1, 40, 31, BLACK);
     display.setTextSize(1);              // Normal 1:1 pixel scale
     display.setCursor(40,1);   
     display.setTextColor(SSD1306_WHITE);
@@ -106,4 +106,8 @@ void displayRGBValue(int dec_red, int dec_green, int dec_blue) {
     display.setCursor(40,24);  
     display.print("B:"); display.print(dec_blue); 
     display.display();
+}
+
+void displayClear(){
+    display.clearDisplay();
 }

@@ -17,9 +17,10 @@ bool bleService_state = false;
 bool bleAdvertising_state = false;
 int bleDeviceConnection_state = 0;
 
-int red = 0, green = 0, blue = 0;
+uint8_t red = 0, green = 0, blue = 0;
 int effect = 0;
-int alpha = 0;
+uint8_t alpha = 200;
+bool up_down = false;
 
 int hexToDecimal(String hexString) {
   long decimalValue = strtol(hexString.c_str(), NULL, 16);
@@ -157,4 +158,16 @@ int get_valueALPHA() {
 }
 int get_valueEFFECT() {
     return effect;
+}
+
+void write_valueEFFECT(int set_effect){
+  effect = set_effect;
+}
+void write_valueALPHA(int add){
+  uint8_t current_alpha = get_valueALPHA();
+  if (current_alpha > (255-add) || current_alpha < add) {
+    up_down = !up_down;
+  }
+  if(up_down) alpha = current_alpha + add;
+  if(!up_down) alpha = current_alpha - add;
 }

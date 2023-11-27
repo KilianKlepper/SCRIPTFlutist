@@ -15,6 +15,7 @@ int step = -1;
 int center = 0; 
 int bright = 50;
 int baza = 0;
+int hue = 0;
 
 static void addGlitter( fract8 chanceOfGlitter)
 {
@@ -24,11 +25,12 @@ static void addGlitter( fract8 chanceOfGlitter)
 }
 
 static void RGBRainbow() {
-    // for(int i = 0; i < NUM_LEDS; i++) {
-    //     leds[i] = CHSV(baza+ i * 5, 255, 255);
-    // }
-    // baza++;
     fill_rainbow( leds, NUM_LEDS, gHue++, 7);
+}
+
+static void RGBFade() {
+    fill_solid(leds, NUM_LEDS, CHSV(hue, 255, 255));
+    hue++;
 }
 
 static void RGBKonfetti() {
@@ -71,7 +73,6 @@ static void RGBGlitterRainbow()
   addGlitter(80);
 }
 
-
 void initRGB(){
     Serial.print("Initializing RGB-Strip... ");
     FastLED.addLeds<WS2811, DATA_PIN, BRG>(leds, NUM_LEDS);
@@ -79,6 +80,21 @@ void initRGB(){
     FastLED.show();
     Serial.println("OK");
 }
+
+int get_r(){
+    CRGB currentColor = leds[0];
+    return currentColor.r;
+}
+int get_g(){
+    CRGB currentColor = leds[0];
+    return currentColor.g;
+
+}
+int get_b(){
+    CRGB currentColor = leds[0];
+    return currentColor.b;
+}
+
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue) {
     // Serial.print("Update Color to Value:... ");
@@ -91,8 +107,9 @@ void updateRGBValue(int dec_red, int dec_green, int dec_blue) {
     // delay(300);
 }
 
-void updateRGBeffect(int effect) {
-    FastLED.setBrightness(255);//get_valueALPHA());
+void updateRGBeffect(int effect, int brightness, int speed, int cap_hue) {
+
+    FastLED.setBrightness(brightness);
     switch (effect)
     {
     case OFF:
@@ -100,6 +117,10 @@ void updateRGBeffect(int effect) {
         break;
     case BASIC:
         updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
+        break;
+    case FADE:
+        RGBFade();
+        FastLED.show();
         break;
     case RAINBOW:
         RGBRainbow();
@@ -125,8 +146,15 @@ void updateRGBeffect(int effect) {
         RGBsinelon();
         FastLED.show();
         break;
+    case STATIONARY:
+    fill_solid(leds, NUM_LEDS, CHSV(cap_hue, 255, 255));
+        FastLED.show();
+        break;
     default:
         break;
+    }
+    if(effect != OFF) {
+        delay(speed);
     }
 }
 

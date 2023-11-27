@@ -24,6 +24,8 @@ bool get_Button_OnOff_state();
 
 bool get_RGB_Power_state();
 
+bool toogle_Power_state();
+
 bool get_MCU_Power_state();
 
 bool vibration_feedback(bool button_state);

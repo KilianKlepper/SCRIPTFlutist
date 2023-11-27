@@ -12,6 +12,8 @@
 
 void initDisplay();
 
+void displayClear();
+
 void displayBLE_Status(int ble_state);
 
 void displayOnOff_Status(bool OnOff_State);

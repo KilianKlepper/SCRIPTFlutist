@@ -2,6 +2,10 @@
 #include <Arduino.h>
 #include "interface.h"
 
+bool rising_flag = false;
+bool falling_flag = false;
+bool rgb_power_state = false;
+
 void initInterface(){
     // Time critical function call before serial print
     pinMode(MCU_POW,OUTPUT);
@@ -20,7 +24,11 @@ void initInterface(){
 // Button Control
 /// true when pressed, on/off control
 bool get_Button_OnOff_state(){ 
-    return digitalRead(ON_OFF);
+    return !digitalRead(ON_OFF);
+}
+
+bool get_RGB_Power_state(){
+    return digitalRead(RGB_POW);
 }
 
 /// true when pressed, will increase brrignetss of the rgb
@@ -45,4 +53,17 @@ bool vibration_feedback(bool button_state) {
         digitalWrite(VIB_MOT, LOW);
     }
     return digitalRead(VIB_MOT);
+}
+
+bool toogle_Power_state() {
+    if(get_Button_OnOff_state() || rising_flag) {
+        rising_flag = true;
+    } 
+    if(!get_Button_OnOff_state() && rising_flag) {
+        rising_flag = false;
+        falling_flag =true;
+        rgb_power_state = !rgb_power_state;
+    }
+    falling_flag = false;
+    return rgb_power_state;
 }
