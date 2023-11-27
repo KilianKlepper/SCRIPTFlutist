@@ -5,11 +5,12 @@
 #define RGB_H
 
 /// WS2811 LED string setup
-#define NUM_LEDS 10
+#define NUM_LEDS 100
 #define DATA_PIN 23
 
 enum rgbEffect
 {
+    OFF,
     BASIC,
     RAINBOW,
     RAINBOWGLITTER,

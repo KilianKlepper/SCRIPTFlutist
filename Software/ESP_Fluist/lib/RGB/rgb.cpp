@@ -92,9 +92,12 @@ void updateRGBValue(int dec_red, int dec_green, int dec_blue) {
 }
 
 void updateRGBeffect(int effect) {
-    FastLED.setBrightness(get_valueALPHA());
+    FastLED.setBrightness(255);//get_valueALPHA());
     switch (effect)
     {
+    case OFF:
+        // do off stuff
+        break;
     case BASIC:
         updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
         break;

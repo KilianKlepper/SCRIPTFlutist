@@ -4,7 +4,7 @@
 #include <ble.h>
 #include <rgb.h>
 
-rgbEffect appEffect = JUGGLE;
+rgbEffect appEffect = RAINBOWGLITTER;
 
 void setup() {
   Serial.begin(115200);
@@ -12,6 +12,9 @@ void setup() {
   initDisplay();
   initBLE();
   initRGB();
+  Serial.print("Initializing RGB-Strip... ");
+  Serial.println("Initializing Done....Ready");
+
 
 }
 
@@ -22,9 +25,11 @@ void loop() {
   // Update OLED
   displayBLE_Status(get_connectionState());
 
-  displayRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
-  // updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
+  displayRGBValue(200, 200, 200);
+  updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
   updateRGBeffect(get_valueEFFECT());
+  // updateRGBeffect(appEffect);
+  // updateRGBValue(255, 255, 255);
   // put your main code here, to run repeatedly:
   displayOnOff_Status(get_Button_OnOff_state());
   displayCapSense_Status(get_CapSense_Up_state(), get_CapSense_Down_state(), get_CapSense_Effect_state());
