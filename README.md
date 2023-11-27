@@ -42,3 +42,19 @@ Welcome to the Stained Fluist, where we're turning an old colored glass window i
 ### App
 
 - Flutter based BLE Controll app
+
+## Troubleshooting
+
+The first test run on 26.11.23 was bombastic. However, we gained the following findings:
+
+- The distance from the LEDs to the frosted glass is too small (2cm) this must be increased (3.5cm)
+
+- therefore a frame must also be integrated
+
+- an RGB effect of continuous full-surface colors is the best effect
+
+- Light performance should be sufficient but 2-3 more meeters would be nice
+
+- The screws must become longer
+
+- The frame color was changed to white
