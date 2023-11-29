@@ -24,7 +24,7 @@ void setup() {
   initRGB();
   initBLE();
   
-  Serial.print("Initializing:............ DONE");
+  Serial.println("Initializing:............ DONE");
 
 }
 
@@ -34,8 +34,6 @@ void loop() {
   bleConnect();
   // Update OLED
 
-
-  digitalWrite(RGB_POW, toogle_Power_state());
   switch (state)
   {
   case FLUIST_OFF:
@@ -60,7 +58,7 @@ void loop() {
     fluistEffect = get_valueEFFECT();
     fluistBrightness = get_valueALPHA();
 
-    updateRGBeffect(fluistEffect, get_valueALPHA(), fluistSpeed, fluistHue);
+    updateRGBeffect(fluistEffect, fluistBrightness, fluistSpeed, fluistHue);
     
     // Button Update
     if(get_CapSense_Up_state()) {
@@ -73,7 +71,7 @@ void loop() {
     }
 
     // Transition Function
-    if(!toogle_Power_state()) {
+    if(get_valueEFFECT() == OFF) {
       Serial.print("StateMachine set to:......");
       state = FLUIST_OFF;
       write_valueEFFECT(OFF);

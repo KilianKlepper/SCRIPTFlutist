@@ -22,7 +22,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 // App Header String
-  String connectionText = "";
+  String connectionText = "Disconnected";
+  List<DiscoveredDevice> devices = [];
 
 // ARGB
   double brightness = 0;
@@ -62,16 +63,34 @@ class _HomePageState extends State<HomePage> {
 // Main scanning logic happens here ⤵️
     if (permGranted) {
       print('BLE: Permission Granted...');
-      _scanStream = flutterReactiveBle
-          .scanForDevices(withServices: [serviceUuid]).listen((device) {
-        // Change this string to what you defined in Zephyr
-        if (device.name == 'ESP32') {
-          setState(() {
-            _ubiqueDevice = device;
-            _foundDeviceWaitingToConnect = true;
-          });
+      // Scan for all devices
+      _scanStream = flutterReactiveBle.scanForDevices(withServices: []).listen((device) {
+        if (!devices.contains(device)) {
+          devices.add(device);
+          print('Found device: ${device.name}, ID: ${device.id}');
+          if (device.name == 'FLUIST') {
+            _scanStream.cancel();
+            setState(() {
+             _ubiqueDevice = device;
+             _foundDeviceWaitingToConnect = true;
+             connectionText = "Found";
+            });
+         }
+         
         }
       });
+      // _scanStream = flutterReactiveBle
+      //     .scanForDevices(withServices: [serviceUuid]).listen((device) {
+      //       print('BLE: Found device: ${device.name}, ID: ${device.id}, RSSI: ${device.rssi}');
+      //   // Change this string to what you defined in Zephyr
+      //   if (device.name == 'FLUIST') {
+      //     setState(() {
+      //       _ubiqueDevice = device;
+      //       _foundDeviceWaitingToConnect = true;
+      //       _scanStream.cancel();
+      //     });
+      //   }
+      // });
     }
   }
 
@@ -93,7 +112,7 @@ class _HomePageState extends State<HomePage> {
           {
             print('BLE: Device connected.....');
             _rxCharacteristic = QualifiedCharacteristic(
-                serviceId: serviceUuid,
+                serviceId: serviceUuid, 
                 characteristicId: characteristicUuid,
                 deviceId: event.deviceId);
             setState(() {
@@ -117,8 +136,12 @@ class _HomePageState extends State<HomePage> {
   bool colorChangeUpdated = false; // Flag to track color changes
   void updateRGBviaBLE() {
     if (_connected) {
-      connectionText = "Sent";
-      alpha = currentColor.alpha;
+      // connectionText = "Sent";
+      if(effect == 1) {
+        alpha = currentColor.alpha;
+      } else {
+        alpha = (brightness*255).toInt();
+      }
       red = currentColor.red;
       blue = currentColor.blue;
       green = currentColor.green;
@@ -143,17 +166,19 @@ class _HomePageState extends State<HomePage> {
   }
   
   void powerOnOff() {
-    setState(() {
-      if(effect == 0) {
+    setState(() {// ON
+      if(effect == 0 && _connected) {
         effect = 1;
         onoffColor = Colors.white;
         currentColor = Color.fromARGB(255, 226, 200, 122);
-      } else {
+        connectionText = "On";
+      } else { // OFF
         effect = 0;
         currentColor = Color.fromARGB(255, 107, 108, 109);
         onoffColor = const Color.fromARGB(255, 52, 55, 63);
+        connectionText = "Off";
       }
-      // updateRGBviaBLE();
+      updateRGBviaBLE();
     });
   }
 
@@ -189,9 +214,7 @@ class _HomePageState extends State<HomePage> {
           SizedBox(height: 300), // Add spacing between buttons
           FloatingActionButton(
             backgroundColor: Color.fromARGB(255, 70, 74, 85),
-            onPressed: () {
-              powerOnOff();
-          },
+            onPressed: () => powerOnOff(),
             child: Icon(
               Icons.power_settings_new,
               color:onoffColor,
@@ -249,9 +272,8 @@ class _HomePageState extends State<HomePage> {
                       inactiveColor: Color.fromARGB(255, 70, 74, 85),
                       thumbColor: Colors.white,
                       onChanged: (value) {
-                        setState(() {
-                          brightness = value;
-                        });
+                        brightness = value;
+                        changeBrightness(value);
                       },
                     ),
                   ),
@@ -344,17 +366,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   // create some values
-  Color pickerColor = Color(0xff443a49);
-  Color currentColor = Color(0xff443a49);
-  Color onoffColor = Color.fromARGB(255, 70, 74, 85);
+  Color pickerColor = Color.fromARGB(255, 107, 108, 109);
+  Color currentColor = Color.fromARGB(255, 107, 108, 109);
+  Color onoffColor = const Color.fromARGB(255, 52, 55, 63);
 
 // ValueChanged<Color> callback
   void changeColor(Color color) {
     setState(() {
       pickerColor = color;
       currentColor = color;
-      effect = 0;
+      effect = 1;
       // Set the flag to true when color changes
+      if (!colorChangeUpdated) updateRGBviaBLE();
+    });
+  }
+
+  void changeBrightness(double value) {
+    setState(() {
+      alpha = value.toInt();
       if (!colorChangeUpdated) updateRGBviaBLE();
     });
   }
@@ -379,11 +408,12 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Got it'),
             onPressed: () {
+              connectionText = "Solid";
               setState(() => currentColor = pickerColor);
-              // effect = 1;
+              effect = 1;
               updateRGBviaBLE();
-              Navigator.of(context).pop();
               print('Alpha: $alpha, Red:$red, Green:$green, Blue:$blue');
+              Navigator.of(context).pop();
             },
           ),
         ],
@@ -400,9 +430,29 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Color.fromARGB(255, 52, 55, 63),
         actions: <Widget>[
           ElevatedButton(
+            child: const Text('Fade'),
+            onPressed: () {
+              connectionText = "Fade";
+              effect = 2; // 2
+              updateRGBviaBLE();
+              Navigator.of(context)
+                  .pop(); // Close the dialog without updating RGB
+            },
+          ),
+          ElevatedButton(
             child: const Text('Rainbow'),
             onPressed: () {
-              effect = 1; // 2
+              connectionText = "Rainbow";
+              effect = 3; //3
+              updateRGBviaBLE();
+              Navigator.of(context)
+                  .pop(); // Close the dialog without updating RGB
+            },
+          ),
+          ElevatedButton(
+            child: const Text('Glitterbow'),
+            onPressed: () {
+              effect = 4; //4
               updateRGBviaBLE();
               Navigator.of(context)
                   .pop(); // Close the dialog without updating RGB
@@ -411,7 +461,8 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Confetti'),
             onPressed: () {
-              effect = 3; //4
+              connectionText = "Confetti";
+              effect = 5; //5
               updateRGBviaBLE();
               Navigator.of(context)
                   .pop(); // Close the dialog without updating RGB
@@ -420,7 +471,8 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Juggle'),
             onPressed: () {
-              effect = 5; //6
+              connectionText = "Juggle";
+              effect = 7; //7
               updateRGBviaBLE();
               Navigator.of(context)
                   .pop(); // Close the dialog without updating RGB

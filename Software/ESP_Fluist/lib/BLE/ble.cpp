@@ -132,8 +132,10 @@ void bleDisconnect() {
 void bleConnect() {
     if (deviceConnected && !oldDeviceConnected) {
         // do stuff here on connecting
+        Serial.print("Device connected......... ");
         oldDeviceConnected = deviceConnected;
         bleDeviceConnection_state = 3;
+        Serial.println("OK");
     } 
 }
 
