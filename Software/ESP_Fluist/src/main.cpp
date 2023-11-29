@@ -51,8 +51,8 @@ void loop() {
   case FLUIST_ON:
     // Update Display
     displayBLE_Status(get_connectionState());
-    displayRGBValue(get_r(), get_g(), get_b());
-    displayOnOff_Status(get_RGB_Power_state());
+    displayeARGBValue(get_valueEFFECT(), get_valueALPHA(), get_r(), get_g(), get_b());
+    // displayOnOff_Status(get_RGB_Power_state());
     displayCapSense_Status(get_CapSense_Up_state(), get_CapSense_Down_state(), get_CapSense_Effect_state());
     // Update RGB
     fluistEffect = get_valueEFFECT();

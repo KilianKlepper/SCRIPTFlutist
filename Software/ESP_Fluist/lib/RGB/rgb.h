@@ -10,18 +10,17 @@
 
 enum rgbEffect
 {
-    OFF,
-    BASIC,
-    FADE,
-    RAINBOW,
-    RAINBOWGLITTER,
-    KONFETTI,
-    LAUFLICHT,
-    JUGGLE,
-    SINELON,
-    STATIONARY
+    OFF,             // OFF
+    BASIC,           // BASIC
+    FADE,            // FADE
+    RAINBOW,         // RNBW
+    RAINBOWGLITTER,  // RGGL
+    CONFETTI,        // CNFT
+    RUNNINGLIGHT,    // RUNL
+    JUGGLE,          // JGL
+    SINELON,         // SNLN
+    STATIONARY       // STAT
 };
-
 void initRGB();
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue);

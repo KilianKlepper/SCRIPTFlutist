@@ -20,7 +20,7 @@ int hue = 0;
 static void addGlitter( fract8 chanceOfGlitter)
 {
   if ( random8() < chanceOfGlitter) {
-    leds[ random16(NUM_LEDS) ] += CRGB::White;
+    leds[random16(NUM_LEDS)] += CRGB::White;
   }
 }
 
@@ -69,8 +69,9 @@ static void RGBGlitterRainbow()
 {
   // built-in FastLED rainbow, plus some random sparkly glitter
   fill_rainbow( leds, NUM_LEDS, gHue++, 7);
-  FastLED.show();
   addGlitter(80);
+  FastLED.show();
+  
 }
 
 void initRGB(){
@@ -97,14 +98,11 @@ int get_b(){
 
 
 void updateRGBValue(int dec_red, int dec_green, int dec_blue) {
-    // Serial.print("Update Color to Value:... ");
-    // FastLED.setBrightness(dec_alpha);
+    leds[0].r = dec_red;
+    leds[0].g = dec_green;
+    leds[0].b = dec_blue;
+    
     LEDS.showColor(CRGB(dec_red, dec_green, dec_blue));
-    // Serial.print(dec_red); Serial.print(", ");
-    // Serial.print(dec_green); Serial.print(", ");
-    // Serial.println(dec_blue);
-    // FastLED.show();
-    // delay(300);
 }
 
 void updateRGBeffect(int effect, int brightness, int speed, int cap_hue) {
@@ -116,7 +114,9 @@ void updateRGBeffect(int effect, int brightness, int speed, int cap_hue) {
         // do off stuff
         break;
     case BASIC:
+        // LEDS.showColor(CRGB(get_valueRED(), get_valueGREEN(), get_valueBLUE()));
         updateRGBValue(get_valueRED(), get_valueGREEN(), get_valueBLUE());
+        FastLED.show();
         break;
     case FADE:
         RGBFade();
@@ -130,11 +130,11 @@ void updateRGBeffect(int effect, int brightness, int speed, int cap_hue) {
         RGBGlitterRainbow();
         FastLED.show();
         break;
-    case KONFETTI:
+    case CONFETTI:
         RGBKonfetti();
         FastLED.show();
         break;
-    case LAUFLICHT:
+    case RUNNINGLIGHT:
         RGBLauflicht();
         FastLED.show();
         break;
