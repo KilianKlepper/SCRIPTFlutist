@@ -21,6 +21,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    print("Scanning for FLUIST and immediately connecting if found...");
+    _startScan();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    print("Exiting...");
+  }
+
 // App Header String
   String connectionText = "Disconnected";
   List<DiscoveredDevice> devices = [];
@@ -76,6 +89,7 @@ class _HomePageState extends State<HomePage> {
               _foundDeviceWaitingToConnect = true;
               connectionText = "Found";
             });
+            _connectToDevice();
           }
         }
       });
@@ -126,6 +140,7 @@ class _HomePageState extends State<HomePage> {
           {
             print('BLE: Device disconnected..');
             connectionText = "Disconnected";
+            _startScan();
             break;
           }
         default:

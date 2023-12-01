@@ -2,7 +2,7 @@
 >
 > Bringing Light to Nostalgia
 
-![Fluist in the Stained glass](/Assets/Images/Rendering.jpeg)
+![Fluist in the Stained glass](/Assets/Images/Rendering_v2.png)
 
 ## Overview
 
