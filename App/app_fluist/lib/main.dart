@@ -64,19 +64,19 @@ class _HomePageState extends State<HomePage> {
     if (permGranted) {
       print('BLE: Permission Granted...');
       // Scan for all devices
-      _scanStream = flutterReactiveBle.scanForDevices(withServices: []).listen((device) {
+      _scanStream =
+          flutterReactiveBle.scanForDevices(withServices: []).listen((device) {
         if (!devices.contains(device)) {
           devices.add(device);
           print('Found device: ${device.name}, ID: ${device.id}');
           if (device.name == 'FLUIST') {
             _scanStream.cancel();
             setState(() {
-             _ubiqueDevice = device;
-             _foundDeviceWaitingToConnect = true;
-             connectionText = "Found";
+              _ubiqueDevice = device;
+              _foundDeviceWaitingToConnect = true;
+              connectionText = "Found";
             });
-         }
-         
+          }
         }
       });
       // _scanStream = flutterReactiveBle
@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> {
           {
             print('BLE: Device connected.....');
             _rxCharacteristic = QualifiedCharacteristic(
-                serviceId: serviceUuid, 
+                serviceId: serviceUuid,
                 characteristicId: characteristicUuid,
                 deviceId: event.deviceId);
             setState(() {
@@ -137,10 +137,10 @@ class _HomePageState extends State<HomePage> {
   void updateRGBviaBLE() {
     if (_connected) {
       // connectionText = "Sent";
-      if(effect == 1) {
+      if (effect == 1) {
         alpha = currentColor.alpha;
       } else {
-        alpha = (brightness*255).toInt();
+        alpha = (brightness * 255).toInt();
       }
       red = currentColor.red;
       blue = currentColor.blue;
@@ -164,15 +164,17 @@ class _HomePageState extends State<HomePage> {
       });
     });
   }
-  
+
   void powerOnOff() {
-    setState(() {// ON
-      if(effect == 0 && _connected) {
+    setState(() {
+      // ON
+      if (effect == 0 && _connected) {
         effect = 1;
         onoffColor = Colors.white;
         currentColor = Color.fromARGB(255, 226, 200, 122);
         connectionText = "On";
-      } else { // OFF
+      } else {
+        // OFF
         effect = 0;
         currentColor = Color.fromARGB(255, 107, 108, 109);
         onoffColor = const Color.fromARGB(255, 52, 55, 63);
@@ -180,6 +182,30 @@ class _HomePageState extends State<HomePage> {
       }
       updateRGBviaBLE();
     });
+  }
+
+  String getImageAssetPathFromEffectValue(int effect) {
+    // Implement logic to map BLE value to image asset path
+    switch (effect) {
+      case 0:
+        return 'assets/outline.png';
+      case 1:
+        return 'assets/outline.png';
+      case 2:
+        return 'assets/outline.png';
+      case 3:
+        return 'assets/rainbow.png';
+      case 4:
+        return 'assets/rainbow_glitter.png';
+      case 5:
+        return 'assets/confetti.png';
+      case 6:
+        return 'assets/outline.png';
+      case 7:
+        return 'assets/juggle.png';
+      default:
+        return 'assets/outline.png';
+    }
   }
 
   @override
@@ -192,14 +218,14 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Color.fromARGB(255, 70, 74, 85),
       ),
       floatingActionButton: Column(
-    mainAxisAlignment: MainAxisAlignment.end,
-    children: [
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
           FloatingActionButton(
             backgroundColor: Color.fromARGB(255, 70, 74, 85),
             onPressed: () => showPicker(),
             child: Icon(
               Icons.color_lens,
-              color:onoffColor,
+              color: onoffColor,
             ),
           ),
           SizedBox(height: 16), // Add spacing between buttons
@@ -208,7 +234,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () => showEffects(),
             child: Icon(
               Icons.slideshow,
-              color:onoffColor,
+              color: onoffColor,
             ),
           ),
           SizedBox(height: 300), // Add spacing between buttons
@@ -217,90 +243,82 @@ class _HomePageState extends State<HomePage> {
             onPressed: () => powerOnOff(),
             child: Icon(
               Icons.power_settings_new,
-              color:onoffColor,
+              color: onoffColor,
             ),
           ),
         ],
       ),
-      
       backgroundColor: Color.fromARGB(255, 52, 55, 63),
       body: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(height: 16), // Add spacing
-        RichText(
-          text: TextSpan(
-            text: 'WINDOW STATUS: ', // First part of the text with one color
-            style: TextStyle(color: Color.fromARGB(255, 70, 74, 85)),
-            children: <TextSpan>[
-              TextSpan(
-                text: connectionText.toUpperCase(), // Second part of the text with a different color
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(height: 16), // Add spacing
+          RichText(
+            text: TextSpan(
+              text: 'WINDOW STATUS: ', // First part of the text with one color
+              style: TextStyle(color: Color.fromARGB(255, 70, 74, 85)),
+              children: <TextSpan>[
+                TextSpan(
+                  text: connectionText
+                      .toUpperCase(), // Second part of the text with a different color
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(height: 100), // Add spacing
-        Container(
-          width: 300,
-          color: currentColor,
-          child: Image.asset('assets/outline.png'),
-        ),
-        SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 60),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    // Replace with your first icon or widget
-                    child: Icon(
-                      Icons.light_mode_outlined,
-                      color: Colors.grey,
+          SizedBox(height: 100), // Add spacing
+          Container(
+            width: 300,
+            color: currentColor,
+            child: Image.asset(
+              getImageAssetPathFromEffectValue(effect), // 'assets/outline.png'
+            ),
+          ),
+          SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 60),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      // Replace with your first icon or widget
+                      child: Icon(
+                        Icons.light_mode_outlined,
+                        color: Colors.grey,
                       ),
-                  ),
-                  Expanded(
-                    child: Slider(
-                      value: brightness,
-                      activeColor: Colors.grey,
-                      inactiveColor: Color.fromARGB(255, 70, 74, 85),
-                      thumbColor: Colors.white,
-                      onChanged: (value) {
-                        brightness = value;
-                        changeBrightness(value);
-                      },
                     ),
-                  ),
-                  Container(
-                    // Replace with your second icon or widget
-                    child: Icon(
-                      Icons.light_mode,
-                      color: Colors.grey,
+                    Expanded(
+                      child: Slider(
+                        value: brightness,
+                        activeColor: Colors.grey,
+                        inactiveColor: Color.fromARGB(255, 70, 74, 85),
+                        thumbColor: Colors.white,
+                        onChanged: (value) {
+                          brightness = value;
+                          changeBrightness(value);
+                        },
                       ),
-                  ),
-                ],
-              ),
-            ],
+                    ),
+                    Container(
+                      // Replace with your second icon or widget
+                      child: Icon(
+                        Icons.light_mode,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        // SizedBox(height: 16), // Add spacing
-        // Center(
-        //   child: ElevatedButton(
-        //     onPressed: () => showPicker(),
-        //     child: const Text(
-        //       "Color",
-        //       style: TextStyle(color: Colors.grey),
-        //     ),
-        //   ),
-        // ),
-      ],
-    ),
+        ],
+      ),
       persistentFooterButtons: [
         // We want to enable this button if the scan has NOT started
         // If the scan HAS started, it should be disabled.
@@ -368,6 +386,8 @@ class _HomePageState extends State<HomePage> {
   // create some values
   Color pickerColor = Color.fromARGB(255, 107, 108, 109);
   Color currentColor = Color.fromARGB(255, 107, 108, 109);
+  Color effectColor1 = Color.fromARGB(255, 107, 108, 109);
+  Color effectColor2 = Color.fromARGB(255, 107, 108, 109);
   Color onoffColor = const Color.fromARGB(255, 52, 55, 63);
 
 // ValueChanged<Color> callback
@@ -375,6 +395,8 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       pickerColor = color;
       currentColor = color;
+      effectColor1 = color;
+      effectColor2 = color;
       effect = 1;
       // Set the flag to true when color changes
       if (!colorChangeUpdated) updateRGBviaBLE();
@@ -422,7 +444,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-    Future showEffects() {
+  Future showEffects() {
     // raise the [showDialog] widget
     return showDialog(
       builder: (context) => AlertDialog(
