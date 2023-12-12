@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage> {
               _foundDeviceWaitingToConnect = true;
               connectionText = "Found";
             });
-            _connectToDevice();
+            // _connectToDevice();
           }
         }
       });
@@ -111,19 +111,19 @@ class _HomePageState extends State<HomePage> {
   void _connectToDevice() {
     // We're done scanning, we can cancel it
     print('BLE: Connect to Device....');
-    connectionText = "Connected";
     _scanStream.cancel();
     // Let's listen to our connection so we can make updates on a state change
     Stream<ConnectionStateUpdate> _currentConnectionStream = flutterReactiveBle
         .connectToAdvertisingDevice(
             id: _ubiqueDevice.id,
-            prescanDuration: const Duration(seconds: 1),
+            prescanDuration: const Duration(seconds: 2),
             withServices: [serviceUuid, characteristicUuid]);
     _currentConnectionStream.listen((event) {
       switch (event.connectionState) {
         // We're connected and good to go!
         case DeviceConnectionState.connected:
           {
+            connectionText = "Connected";
             print('BLE: Device connected.....');
             _rxCharacteristic = QualifiedCharacteristic(
                 serviceId: serviceUuid,
@@ -140,7 +140,7 @@ class _HomePageState extends State<HomePage> {
           {
             print('BLE: Device disconnected..');
             connectionText = "Disconnected";
-            _startScan();
+            // _startScan();
             break;
           }
         default:
@@ -183,19 +183,26 @@ class _HomePageState extends State<HomePage> {
   void powerOnOff() {
     setState(() {
       // ON
-      if (effect == 0 && _connected) {
-        effect = 1;
-        onoffColor = Colors.white;
-        currentColor = Color.fromARGB(255, 226, 200, 122);
-        connectionText = "On";
-      } else {
-        // OFF
-        effect = 0;
-        currentColor = Color.fromARGB(255, 107, 108, 109);
-        onoffColor = const Color.fromARGB(255, 52, 55, 63);
-        connectionText = "Off";
+      if (_foundDeviceWaitingToConnect || _connected) {
+        if (_connected) {
+          if (effect == 0) {
+            effect = 1;
+            onoffColor = Colors.white;
+            currentColor = Color.fromARGB(255, 226, 200, 122);
+            connectionText = "On";
+          } else {
+            // OFF
+            effect = 0;
+            currentColor = Color.fromARGB(255, 107, 108, 109);
+            onoffColor = const Color.fromARGB(255, 52, 55, 63);
+            connectionText = "Off";
+          }
+          updateRGBviaBLE();
+        } else {
+          _connectToDevice();
+        }
+        _startScan();
       }
-      updateRGBviaBLE();
     });
   }
 

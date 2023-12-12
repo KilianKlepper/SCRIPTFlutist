@@ -20,7 +20,7 @@ void displayOnOff_Status(bool OnOff_State);
 
 void displayCapSense_Status(bool CapSense_Up, bool CapSense_Down, bool CapSense_Effect);
 
-void displayeARGBValue(int effect, int dec_alpha, int dec_red, int dec_green, int dec_blue);
+void displayARGBValue(int effect, int dec_alpha, int dec_red, int dec_green, int dec_blue);
 
 /**
  * Made with Marlin Bitmap Converter
