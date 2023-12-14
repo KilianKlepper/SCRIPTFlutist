@@ -1,16 +1,22 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:io' show Platform;
+import 'package:flutter/services.dart';
 
 import 'package:location_permissions/location_permissions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
-void main() {
-  return runApp(
-    const MaterialApp(debugShowCheckedModeBanner: false, home: HomePage()),
-  );
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]).then((_) {
+    runApp(const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: HomePage(),
+    ));
+  });
 }
 
 class HomePage extends StatefulWidget {
@@ -31,11 +37,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     super.dispose();
+    _scanStream.cancel();
     print("Exiting...");
   }
 
 // App Header String
   String connectionText = "Disconnected";
+  String windowText = "Off";
   List<DiscoveredDevice> devices = [];
 
 // ARGB
@@ -46,9 +54,10 @@ class _HomePageState extends State<HomePage> {
   int green = 0;
   int effect = 0;
 // Some state management stuff
-  bool _foundDeviceWaitingToConnect = false;
   bool _scanStarted = false;
+  bool _foundDeviceWaitingToConnect = false;
   bool _connected = false;
+  bool _errorHandle = false;
 // Bluetooth related variables
   late DiscoveredDevice _ubiqueDevice;
   final flutterReactiveBle = FlutterReactiveBle();
@@ -64,6 +73,7 @@ class _HomePageState extends State<HomePage> {
     bool permGranted = false;
     setState(() {
       _scanStarted = true;
+      _errorHandle = true;
       connectionText = "Scanning";
     });
     PermissionStatus permission;
@@ -73,7 +83,7 @@ class _HomePageState extends State<HomePage> {
     } else if (Platform.isIOS) {
       permGranted = true;
     }
-// Main scanning logic happens here ⤵️
+// Main scanning logic happens here
     if (permGranted) {
       print('BLE: Permission Granted...');
       // Scan for all devices
@@ -83,69 +93,93 @@ class _HomePageState extends State<HomePage> {
           devices.add(device);
           print('Found device: ${device.name}, ID: ${device.id}');
           if (device.name == 'FLUIST') {
+            // We're done scanning, we can cancel it
             _scanStream.cancel();
             setState(() {
               _ubiqueDevice = device;
               _foundDeviceWaitingToConnect = true;
               connectionText = "Found";
             });
-            // _connectToDevice();
+            Future.delayed(const Duration(seconds: 1), () {
+              // Reset the connectionText or perform additional actions if needed
+              setState(() {
+                _connectToDevice();
+              });
+            });
           }
         }
       });
-      // _scanStream = flutterReactiveBle
-      //     .scanForDevices(withServices: [serviceUuid]).listen((device) {
-      //       print('BLE: Found device: ${device.name}, ID: ${device.id}, RSSI: ${device.rssi}');
-      //   // Change this string to what you defined in Zephyr
-      //   if (device.name == 'FLUIST') {
-      //     setState(() {
-      //       _ubiqueDevice = device;
-      //       _foundDeviceWaitingToConnect = true;
-      //       _scanStream.cancel();
-      //     });
-      //   }
-      // });
     }
   }
 
   void _connectToDevice() {
-    // We're done scanning, we can cancel it
-    print('BLE: Connect to Device....');
-    _scanStream.cancel();
-    // Let's listen to our connection so we can make updates on a state change
-    Stream<ConnectionStateUpdate> _currentConnectionStream = flutterReactiveBle
-        .connectToAdvertisingDevice(
-            id: _ubiqueDevice.id,
-            prescanDuration: const Duration(seconds: 2),
-            withServices: [serviceUuid, characteristicUuid]);
-    _currentConnectionStream.listen((event) {
-      switch (event.connectionState) {
-        // We're connected and good to go!
-        case DeviceConnectionState.connected:
-          {
-            connectionText = "Connected";
-            print('BLE: Device connected.....');
-            _rxCharacteristic = QualifiedCharacteristic(
-                serviceId: serviceUuid,
-                characteristicId: characteristicUuid,
-                deviceId: event.deviceId);
-            setState(() {
-              _foundDeviceWaitingToConnect = false;
-              _connected = true;
-            });
-            break;
-          }
-        // Can add various state state updates on disconnect
-        case DeviceConnectionState.disconnected:
-          {
-            print('BLE: Device disconnected..');
-            connectionText = "Disconnected";
-            // _startScan();
-            break;
-          }
-        default:
-      }
+    if (!_connected) {
+      // We're done scanning, we can cancel it
+      print('BLE: Connect to Device....');
+      // Let's listen to our connection so we can make updates on a state change
+      Stream<ConnectionStateUpdate> _currentConnectionStream =
+          flutterReactiveBle.connectToAdvertisingDevice(
+              id: _ubiqueDevice.id,
+              prescanDuration: const Duration(seconds: 5),
+              withServices: [serviceUuid, characteristicUuid]);
+      print('BLE: Connection achived....');
+
+      _currentConnectionStream.listen((event) {
+        switch (event.connectionState) {
+          // We're connected and good to go!
+          case DeviceConnectionState.connected:
+            {
+              connectionText = "Connected";
+              print('BLE: Device connected.....');
+              _rxCharacteristic = QualifiedCharacteristic(
+                  serviceId: serviceUuid,
+                  characteristicId: characteristicUuid,
+                  deviceId: event.deviceId);
+              setState(() {
+                _foundDeviceWaitingToConnect = false;
+                _connected = true;
+              });
+              break;
+            }
+          // Can add various state state updates on disconnect
+          case DeviceConnectionState.disconnected:
+            {
+              print('BLE: Device disconnected..');
+              connectionText = "Disconnected";
+              _connected = false;
+              _scanStarted = false;
+              Future.delayed(const Duration(seconds: 1), () {
+                // Reset the connectionText or perform additional actions if needed
+                setState(() {
+                  _startScan();
+                });
+              });
+              break;
+            }
+          default:
+            {
+              print('BLE: Processing....');
+              break;
+            }
+        }
+      });
+    } else {
+      print('BLE: Already connected....');
+    }
+  }
+
+  void _errorHandling() {
+    flutterReactiveBle.clearGattCache(_rxCharacteristic.deviceId);
+    setState(() {
+      _foundDeviceWaitingToConnect = false;
+      _scanStarted = false;
+      _connected = false;
+      _errorHandle = false;
+      effect = 0;
+      currentColor = Color.fromARGB(255, 107, 108, 109);
+      onoffColor = const Color.fromARGB(255, 52, 55, 63);
     });
+    _startScan();
   }
 
   bool colorChangeUpdated = false; // Flag to track color changes
@@ -189,45 +223,39 @@ class _HomePageState extends State<HomePage> {
             effect = 1;
             onoffColor = Colors.white;
             currentColor = Color.fromARGB(255, 226, 200, 122);
-            connectionText = "On";
+            windowText = "On";
+            updateRGBviaBLE();
           } else {
             // OFF
             effect = 0;
+            updateRGBviaBLE();
             currentColor = Color.fromARGB(255, 107, 108, 109);
             onoffColor = const Color.fromARGB(255, 52, 55, 63);
-            connectionText = "Off";
+            windowText = "Off";
           }
-          updateRGBviaBLE();
         } else {
           _connectToDevice();
         }
-        _startScan();
+      } else {
+        if (!_scanStarted) _startScan();
       }
     });
   }
 
   String getImageAssetPathFromEffectValue(int effect) {
     // Implement logic to map BLE value to image asset path
-    switch (effect) {
-      case 0:
-        return 'assets/outline.png';
-      case 1:
-        return 'assets/outline.png';
-      case 2:
-        return 'assets/outline.png';
-      case 3:
-        return 'assets/rainbow.png';
-      case 4:
-        return 'assets/rainbow_glitter.png';
-      case 5:
-        return 'assets/confetti.png';
-      case 6:
-        return 'assets/outline.png';
-      case 7:
-        return 'assets/juggle.png';
-      default:
-        return 'assets/outline.png';
-    }
+    final Map<int, String> effectImagePaths = {
+      0: 'assets/outline.png',
+      1: 'assets/outline.png',
+      2: 'assets/outline.png',
+      3: 'assets/rainbow.png',
+      4: 'assets/rainbow_glitter.png',
+      5: 'assets/confetti.png',
+      6: 'assets/outline.png',
+      7: 'assets/juggle.png',
+    };
+
+    return effectImagePaths[effect] ?? 'assets/outline.png';
   }
 
   @override
@@ -278,11 +306,27 @@ class _HomePageState extends State<HomePage> {
           SizedBox(height: 16), // Add spacing
           RichText(
             text: TextSpan(
-              text: 'WINDOW STATUS: ', // First part of the text with one color
+              text: 'BLE STATUS: ', // First part of the text with one color
               style: TextStyle(color: Color.fromARGB(255, 70, 74, 85)),
               children: <TextSpan>[
                 TextSpan(
                   text: connectionText
+                      .toUpperCase(), // Second part of the text with a different color
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          RichText(
+            text: TextSpan(
+              text: 'WINDOW STATUS: ', // First part of the text with one color
+              style: TextStyle(color: Color.fromARGB(255, 70, 74, 85)),
+              children: <TextSpan>[
+                TextSpan(
+                  text: windowText
                       .toUpperCase(), // Second part of the text with a different color
                   style: TextStyle(
                     color: Colors.white,
@@ -341,67 +385,67 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      persistentFooterButtons: [
-        // We want to enable this button if the scan has NOT started
-        // If the scan HAS started, it should be disabled.
-        _scanStarted
-            // True condition
-            ? ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.grey, // background
-                  onPrimary: Colors.white, // foreground
-                ),
-                onPressed: () {},
-                child: const Icon(Icons.search),
-              )
-            // False condition
-            : ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.blue, // background
-                  onPrimary: Colors.white, // foreground
-                ),
-                onPressed: _startScan,
-                child: const Icon(Icons.search),
-              ),
-        _foundDeviceWaitingToConnect
-            // True condition
-            ? ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.blue, // background
-                  onPrimary: Colors.white, // foreground
-                ),
-                onPressed: _connectToDevice,
-                child: const Icon(Icons.bluetooth),
-              )
-            // False condition
-            : ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.grey, // background
-                  onPrimary: Colors.white, // foreground
-                ),
-                onPressed: () {},
-                child: const Icon(Icons.bluetooth_connected),
-              ),
-        _connected
-            // True condition
-            ? ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.blue, // background
-                  onPrimary: Colors.white, // foreground
-                ),
-                onPressed: updateRGBviaBLE,
-                child: const Icon(Icons.send),
-              )
-            // False condition
-            : ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.grey, // background
-                  onPrimary: Colors.white, // foreground
-                ),
-                onPressed: () {},
-                child: const Icon(Icons.send),
-              ),
-      ],
+      //  persistentFooterButtons: [
+      //    // We want to enable this button if the scan has NOT started
+      //    // If the scan HAS started, it should be disabled.
+      //    _scanStarted
+      //        // True condition
+      //        ? ElevatedButton(
+      //            style: ElevatedButton.styleFrom(
+      //              primary: Colors.grey, // background
+      //              onPrimary: Colors.white, // foreground
+      //            ),
+      //            onPressed: () {},
+      //            child: const Icon(Icons.search),
+      //          )
+      //        // False condition
+      //        : ElevatedButton(
+      //            style: ElevatedButton.styleFrom(
+      //              primary: Colors.blue, // background
+      //              onPrimary: Colors.white, // foreground
+      //            ),
+      //            onPressed: _startScan,
+      //            child: const Icon(Icons.search),
+      //          ),
+      //    _foundDeviceWaitingToConnect
+      //        // True condition
+      //        ? ElevatedButton(
+      //            style: ElevatedButton.styleFrom(
+      //              primary: Colors.blue, // background
+      //              onPrimary: Colors.white, // foreground
+      //            ),
+      //            onPressed: _connectToDevice,
+      //            child: const Icon(Icons.bluetooth),
+      //          )
+      //        // False condition
+      //        : ElevatedButton(
+      //            style: ElevatedButton.styleFrom(
+      //              primary: Colors.grey, // background
+      //              onPrimary: Colors.white, // foreground
+      //            ),
+      //            onPressed: () {},
+      //            child: const Icon(Icons.bluetooth_connected),
+      //          ),
+      //    _errorHandle
+      //        // True condition
+      //        ? ElevatedButton(
+      //            style: ElevatedButton.styleFrom(
+      //              primary: Color.fromARGB(255, 35, 35, 35), // background
+      //              onPrimary: Colors.white, // foreground
+      //            ),
+      //            onPressed: _startScan,
+      //            child: const Icon(Icons.bluetooth_disabled),
+      //          )
+      //        // False condition
+      //        : ElevatedButton(
+      //            style: ElevatedButton.styleFrom(
+      //              primary: Colors.grey, // background
+      //              onPrimary: Colors.white, // foreground
+      //            ),
+      //            onPressed: () {},
+      //            child: const Icon(Icons.bluetooth_disabled),
+      //          ),
+      //  ],
     );
   }
 
@@ -452,7 +496,7 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Got it'),
             onPressed: () {
-              connectionText = "Solid";
+              windowText = "Solid";
               setState(() => currentColor = pickerColor);
               effect = 1;
               updateRGBviaBLE();
@@ -470,13 +514,16 @@ class _HomePageState extends State<HomePage> {
     // raise the [showDialog] widget
     return showDialog(
       builder: (context) => AlertDialog(
-        title: const Text('Effekte:'),
+        title: const Text(
+          'Effekte:',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Color.fromARGB(255, 52, 55, 63),
         actions: <Widget>[
           ElevatedButton(
             child: const Text('Fade'),
             onPressed: () {
-              connectionText = "Fade";
+              windowText = "Fade";
               effect = 2; // 2
               updateRGBviaBLE();
               Navigator.of(context)
@@ -486,7 +533,7 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Rainbow'),
             onPressed: () {
-              connectionText = "Rainbow";
+              windowText = "Rainbow";
               effect = 3; //3
               updateRGBviaBLE();
               Navigator.of(context)
@@ -497,6 +544,7 @@ class _HomePageState extends State<HomePage> {
             child: const Text('Glitterbow'),
             onPressed: () {
               effect = 4; //4
+              windowText = "Rainbow Glitter";
               updateRGBviaBLE();
               Navigator.of(context)
                   .pop(); // Close the dialog without updating RGB
@@ -505,7 +553,7 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Confetti'),
             onPressed: () {
-              connectionText = "Confetti";
+              windowText = "Confetti";
               effect = 5; //5
               updateRGBviaBLE();
               Navigator.of(context)
@@ -515,8 +563,8 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             child: const Text('Juggle'),
             onPressed: () {
-              connectionText = "Juggle";
-              effect = 7; //7
+              windowText = "Juggle";
+              effect = 6; //6
               updateRGBviaBLE();
               Navigator.of(context)
                   .pop(); // Close the dialog without updating RGB
