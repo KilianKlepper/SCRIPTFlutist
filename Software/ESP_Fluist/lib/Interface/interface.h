@@ -7,10 +7,9 @@
 #define CAP_BUT_Y 34
 #define CAP_BUT_O 35
 #define ON_OFF 39
-#define VIB_MOT 26 
+#define VIB_MOT 26
 #define MCU_POW 13
 #define RGB_POW 12
-
 
 void initInterface();
 
@@ -27,6 +26,8 @@ bool get_RGB_Power_state();
 bool toogle_Power_state();
 
 bool get_MCU_Power_state();
+
+bool direction_Alpha_state();
 
 bool vibration_feedback(bool button_state);
 

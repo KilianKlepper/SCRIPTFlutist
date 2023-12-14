@@ -4,8 +4,8 @@
 #include <ble.h>
 #include <rgb.h>
 
-int fluistEffect = OFF;
 rgbEffect fluistEffect_test = FADE;
+int fluistEffect = OFF;
 int fluistBrightness = 0;
 int fluistSpeed = 10;
 int fluistHue = 0;
@@ -69,12 +69,16 @@ void loop()
       fluistHue++;
       delay(10);
     }
-
     if (get_CapSense_Down_state())
     {
       write_valueALPHA(5);
       delay(10);
     }
+    if (toogle_Effect_state())
+    {
+      write_valueEFFECT(random(2, 6));
+    }
+    vibration_feedback(get_CapSense_Up_state() || get_CapSense_Down_state() || get_CapSense_Effect_state());
 
     // Transition Function
     if (get_valueEFFECT() == OFF)
