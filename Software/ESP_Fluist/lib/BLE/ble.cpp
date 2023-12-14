@@ -8,8 +8,8 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-BLEServer* pServer = NULL;
-BLECharacteristic* pCharacteristic = NULL;
+BLEServer *pServer = NULL;
+BLECharacteristic *pCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
@@ -22,38 +22,46 @@ int effect = 0;
 uint8_t alpha = 200;
 bool up_down = false;
 
-int hexToDecimal(String hexString) {
+int hexToDecimal(String hexString)
+{
   long decimalValue = strtol(hexString.c_str(), NULL, 16);
   return (int)decimalValue;
 }
 
-class MyServerCallbacks: public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
-      deviceConnected = true;
-      BLEDevice::startAdvertising();
-    };
+class MyServerCallbacks : public BLEServerCallbacks
+{
+  void onConnect(BLEServer *pServer)
+  {
+    deviceConnected = true;
+    BLEDevice::startAdvertising();
+  };
 
-    void onDisconnect(BLEServer* pServer) {
-      deviceConnected = false;
-    }
+  void onDisconnect(BLEServer *pServer)
+  {
+    deviceConnected = false;
+  }
 };
 
-
-class MyCallbacks : public BLECharacteristicCallbacks {
-  void onWrite(BLECharacteristic *pCharacteristic) {
+class MyCallbacks : public BLECharacteristicCallbacks
+{
+  void onWrite(BLECharacteristic *pCharacteristic)
+  {
     std::string value = pCharacteristic->getValue();
 
     Serial.print("New Message (Hex): ");
-    
-    for (int i = 0; i < value.length(); i++) {
+
+    for (int i = 0; i < value.length(); i++)
+    {
       Serial.print(String(value[i], HEX));
       Serial.print("");
     }
     Serial.println();
 
-    if (value.length() == 5 * sizeof(int8_t)) {
+    if (value.length() == 5 * sizeof(int8_t))
+    {
       int receivedValues[5];
-      for (int i = 0; i < 5; ++i) {
+      for (int i = 0; i < 5; ++i)
+      {
         receivedValues[i] = value[i];
       }
       // Now 'receivedValues' contains the 4 integers sent from Flutter
@@ -63,113 +71,130 @@ class MyCallbacks : public BLECharacteristicCallbacks {
       green = receivedValues[3];
       blue = receivedValues[4];
 
-      Serial.println("eARGB: " + String(effect)+' ' + String(alpha)+' ' + String(red)+' ' + String(green)+' ' + String(blue));
+      Serial.println("eARGB: " + String(effect) + ' ' + String(alpha) + ' ' + String(red) + ' ' + String(green) + ' ' + String(blue));
 
       // Continue with your processing...
-    } else {
+    }
+    else
+    {
       Serial.println("Received value is too short.");
     }
   }
 };
 
-void initBLE() {
-    
-    Serial.print("Initializing BLE......... ");
-    // Create the BLE Device
-    bleDeviceConnection_state = 1;
-    BLEDevice::init(DEVICENAME);
-    // Create the BLE Server
-    pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
+void initBLE()
+{
 
-    // Create the BLE Service
-    BLEService *pService = pServer->createService(SERVICE_UUID);
+  Serial.print("Initializing BLE......... ");
+  // Create the BLE Device
+  bleDeviceConnection_state = 1;
+  BLEDevice::init(DEVICENAME);
+  BLEDevice::setPower(ESP_PWR_LVL_P9);
+  // Create the BLE Server
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
 
-    // Create a BLE Characteristic
-    pCharacteristic = pService->createCharacteristic(
-                        CHARACTERISTIC_UUID,
-                        BLECharacteristic::PROPERTY_READ   |
-                        BLECharacteristic::PROPERTY_WRITE  |
-                        BLECharacteristic::PROPERTY_NOTIFY |
-                        BLECharacteristic::PROPERTY_INDICATE
-                      );
+  // Create the BLE Service
+  BLEService *pService = pServer->createService(SERVICE_UUID);
 
+  // Create a BLE Characteristic
+  pCharacteristic = pService->createCharacteristic(
+      CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_READ |
+          BLECharacteristic::PROPERTY_WRITE |
+          BLECharacteristic::PROPERTY_NOTIFY |
+          BLECharacteristic::PROPERTY_INDICATE);
 
-    pCharacteristic->setCallbacks(new MyCallbacks());
-    // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
-    // Create a BLE Descriptor
-    pCharacteristic->addDescriptor(new BLE2902());
+  pCharacteristic->setCallbacks(new MyCallbacks());
+  // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
+  // Create a BLE Descriptor
+  pCharacteristic->addDescriptor(new BLE2902());
 
-    // Start the service
-    pService->start();
-    Serial.println("OK");
-    bleService_state = true;
+  // Start the service
+  pService->start();
+  Serial.println("OK");
+  bleService_state = true;
 
-    // Start advertising
+  // Start advertising
+  Serial.print("Start Advertising........ ");
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(false);
+  pAdvertising->setMinPreferred(0x0); // set value to 0x00 to not advertise this parameter
+  BLEDevice::startAdvertising();
+  Serial.println("OK");
+  bleAdvertising_state = true;
+  bleDeviceConnection_state = 2;
+  Serial.println("Waiting for Client.......");
+}
+
+void bleDisconnect()
+{
+  if (!deviceConnected && oldDeviceConnected)
+  {
     Serial.print("Start Advertising........ ");
-    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(SERVICE_UUID);
-    pAdvertising->setScanResponse(false);
-    pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
-    BLEDevice::startAdvertising();
+    delay(500);                  // give the bluetooth stack the chance to get things ready
+    pServer->startAdvertising(); // restart advertising
     Serial.println("OK");
-    bleAdvertising_state = true;
+    oldDeviceConnected = deviceConnected;
     bleDeviceConnection_state = 2;
-    Serial.println("Waiting for Client.......");
+  }
 }
 
-void bleDisconnect() {
-    if (!deviceConnected && oldDeviceConnected) {
-        Serial.print("Start Advertising........ ");
-        delay(500); // give the bluetooth stack the chance to get things ready
-        pServer->startAdvertising(); // restart advertising
-        Serial.println("OK");
-        oldDeviceConnected = deviceConnected;
-        bleDeviceConnection_state = 2;
-    }
+void bleConnect()
+{
+  if (deviceConnected && !oldDeviceConnected)
+  {
+    // do stuff here on connecting
+    Serial.print("Device connected......... ");
+    oldDeviceConnected = deviceConnected;
+    bleDeviceConnection_state = 3;
+    Serial.println("OK");
+  }
 }
 
-void bleConnect() {
-    if (deviceConnected && !oldDeviceConnected) {
-        // do stuff here on connecting
-        Serial.print("Device connected......... ");
-        oldDeviceConnected = deviceConnected;
-        bleDeviceConnection_state = 3;
-        Serial.println("OK");
-    } 
+/// @brief
+/// @return
+int get_connectionState()
+{
+  return bleDeviceConnection_state;
 }
 
-/// @brief 
-/// @return 
-int get_connectionState() {
-    return bleDeviceConnection_state;
+int get_valueRED()
+{
+  return red;
 }
-
-int get_valueRED() {
-    return red;
-}
-int get_valueGREEN() {
-    return green;
+int get_valueGREEN()
+{
+  return green;
 };
-int get_valueBLUE() {
-    return blue;
+int get_valueBLUE()
+{
+  return blue;
 }
 
-int get_valueALPHA() {
-    return alpha;
+int get_valueALPHA()
+{
+  return alpha;
 }
-int get_valueEFFECT() {
-    return effect;
+int get_valueEFFECT()
+{
+  return effect;
 }
 
-void write_valueEFFECT(int set_effect){
+void write_valueEFFECT(int set_effect)
+{
   effect = set_effect;
 }
-void write_valueALPHA(int add){
+void write_valueALPHA(int add)
+{
   uint8_t current_alpha = get_valueALPHA();
-  if (current_alpha > (255-add) || current_alpha < add) {
+  if (current_alpha > (255 - add) || current_alpha < add)
+  {
     up_down = !up_down;
   }
-  if(up_down) alpha = current_alpha + add;
-  if(!up_down) alpha = current_alpha - add;
+  if (up_down)
+    alpha = current_alpha + add;
+  if (!up_down)
+    alpha = current_alpha - add;
 }

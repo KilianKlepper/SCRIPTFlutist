@@ -83,7 +83,7 @@ void loop()
       state = FLUIST_OFF;
       write_valueEFFECT(OFF);
       digitalWrite(RGB_POW, false);
-      displayClear();
+      // displayClear();
       Serial.println("OFF");
     }
     break;
@@ -91,5 +91,5 @@ void loop()
   default:
     break;
   }
-  delay(1);
+  delay(10);
 }
