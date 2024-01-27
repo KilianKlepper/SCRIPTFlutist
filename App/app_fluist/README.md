@@ -1,15 +1,17 @@
-# Stained Fluist Android App
+# app_fluist
 
-The Flutter app, named "Stained Fluist," initializes by scanning for BLE devices, specifically targeting the FLUIST device. Once found, it connects to FLUIST, enabling interaction with RGB LED effects. The main screen features buttons for manual interactions, such as initiating a scan, connecting to the device, and updating RGB values. Users can power on/off the device, open a color picker, or select predefined effects. The app communicates with the ESP FLUIST device, updating its state and triggering corresponding visual effects.
+A new Flutter project.
 
 ## Getting Started
 
-### Setting Persmissions
+This project is a starting point for a Flutter application.
 
-Setting permissions locally on the phone is a crucial step in working with Bluetooth on mobile devices, including BLE in the context of your Flutter app. Permissions are necessary to access Bluetooth features, and they are platform-specific.
+A few resources to get you started if this is your first Flutter project:
 
-For this hole the `app icon` and open `app-info`. Select `app authorization`. Everythink shall be set to true.
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
+<<<<<<< HEAD
 In the Android settings You need to add the following permissions to your AndroidManifest.xml file:
 
 ```dart
@@ -99,3 +101,8 @@ subgraph BLECommunication
 end
 
 ```
+=======
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
+>>>>>>> parent of 4fb1247 (:memo: add documentatoin to app readme in APP_FLUIST)
